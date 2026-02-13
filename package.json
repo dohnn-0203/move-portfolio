@@ -1,6 +1,6 @@
 {
+  "homepage": "https://dohnn-0203.github.io/move-portfolio",
   "name": "do-portfolio",
-  "homepage": "https://github.com/dohnn-0203/move-portfolio",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d dist"
   },
   "devDependencies": {
     "gh-pages": "^6.3.0",
