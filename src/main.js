@@ -47,27 +47,33 @@ function main() {
   grid.position.y = 0.01;
   scene.add(grid);
 
-  const player = new THREE.Mesh(
-    new THREE.BoxGeometry(1, 1, 1),
-    new THREE.MeshStandardMaterial({ color: 0xff5555, roughness: 0.6 })
-  );
-  player.position.set(0, 1, 0);
-  player.castShadow = true;
+  const player = new THREE.Object3D();
+  player.position.set(0, 0, 0);
   scene.add(player);
 
   const keys = new Set();
   window.addEventListener("keydown", (e) => keys.add(e.code));
   window.addEventListener("keyup", (e) => keys.delete(e.code));
 
-  const moveSpeed = 4;
   const tmpDir = new THREE.Vector3();
   const camOffset = new THREE.Vector3(0, 4, 8);
   const camTarget = new THREE.Vector3();
+
+  let velocityY = 0;
+  let isGrounded = true;
+
+  const gravity = -18;
+  const jumpPower = 7;
+
+  const walkSpeed = 4;
+  const runSpeed = 7;
 
   const loader = new GLTFLoader();
 
   const SUN_RADIUS = 80;
   const SUN_HEIGHT = 55;
+
+  const baseUrl = import.meta.env.BASE_URL;
 
   // 스카이돔 생성: 구 표면에 점을 배치하고 밤에 더 보이도록 투명도를 조절
   function createStarDome() {
@@ -206,7 +212,7 @@ function main() {
   }
 
   loader.load(
-    "/models/ground.glb",
+    `${baseUrl}models/ground.glb`,
     (gltf) => {
       const base = gltf.scene;
 
@@ -224,7 +230,46 @@ function main() {
     },
     undefined,
     (err) => {
-      console.error("Failed to load /models/ground.glb:", err);
+      console.error(`Failed to load ${baseUrl}models/ground.glb:`, err);
+    }
+  );
+
+  loader.load(
+    `${baseUrl}models/player.glb`,
+    (gltf) => {
+      const model = gltf.scene;
+
+      model.updateMatrixWorld(true);
+      const box = new THREE.Box3().setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+      const minY = box.min.y;
+
+      model.position.x -= center.x;
+      model.position.z -= center.z;
+      model.position.y -= minY;
+
+      model.traverse((o) => {
+        if (o.isMesh) {
+          o.castShadow = true;
+          o.receiveShadow = true;
+          if (o.material) {
+            o.material.roughness = 0.9;
+            o.material.metalness = 0.0;
+          }
+        }
+      });
+
+      const size = box.getSize(new THREE.Vector3());
+      const scale = 1 / Math.max(size.x, size.z, 0.001);
+      model.scale.setScalar(scale);
+
+      model.rotation.y += Math.PI;
+
+      player.add(model);
+    },
+    undefined,
+    (err) => {
+      console.error(`Failed to load ${baseUrl}models/player.glb:`, err);
     }
   );
 
@@ -444,6 +489,14 @@ function main() {
 
     updateTimeOfDay(elapsed);
 
+    const speed =
+      keys.has("ShiftLeft") || keys.has("ShiftRight") ? runSpeed : walkSpeed;
+
+    if (keys.has("Space") && isGrounded) {
+      velocityY = jumpPower;
+      isGrounded = false;
+    }
+
     tmpDir.set(0, 0, 0);
     if (keys.has("KeyW")) tmpDir.z -= 1;
     if (keys.has("KeyS")) tmpDir.z += 1;
@@ -451,11 +504,20 @@ function main() {
     if (keys.has("KeyD")) tmpDir.x += 1;
 
     if (tmpDir.lengthSq() > 0) {
-      tmpDir.normalize().multiplyScalar(moveSpeed * dt);
+      tmpDir.normalize().multiplyScalar(speed * dt);
       player.position.add(tmpDir);
 
       const ang = Math.atan2(tmpDir.x, tmpDir.z);
       player.rotation.y = ang;
+    }
+
+    velocityY += gravity * dt;
+    player.position.y += velocityY * dt;
+
+    if (player.position.y <= 0) {
+      player.position.y = 0;
+      velocityY = 0;
+      isGrounded = true;
     }
 
     shadowFrame += 1;
