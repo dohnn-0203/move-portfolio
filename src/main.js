@@ -211,28 +211,29 @@ function main() {
     return group;
   }
 
-  loader.load(
-    `${baseUrl}models/ground.glb`,
-    (gltf) => {
-      const base = gltf.scene;
+  // ground 띄우는 loader. 잠시 지워둠.
+  // loader.load(
+  //   `${baseUrl}models/ground.glb`,
+  //   (gltf) => {
+  //     const base = gltf.scene;
 
-      const { size } = normalizeModelToGround(base);
+  //     const { size } = normalizeModelToGround(base);
 
-      const tileSize = new THREE.Vector3(
-        Math.max(size.x, 0.001),
-        Math.max(size.y, 0.001),
-        Math.max(size.z, 0.001)
-      );
+  //     const tileSize = new THREE.Vector3(
+  //       Math.max(size.x, 0.001),
+  //       Math.max(size.y, 0.001),
+  //       Math.max(size.z, 0.001)
+  //     );
 
-      const tilesRadius = 4;
-      const tiled = createTiledGround(base, tileSize, tilesRadius);
-      scene.add(tiled);
-    },
-    undefined,
-    (err) => {
-      console.error(`Failed to load ${baseUrl}models/ground.glb:`, err);
-    }
-  );
+  //     const tilesRadius = 4;
+  //     const tiled = createTiledGround(base, tileSize, tilesRadius);
+  //     scene.add(tiled);
+  //   },
+  //   undefined,
+  //   (err) => {
+  //     console.error(`Failed to load ${baseUrl}models/ground.glb:`, err);
+  //   }
+  // );
 
   loader.load(
     `${baseUrl}models/player.glb`,
